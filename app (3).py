@@ -146,6 +146,107 @@ st.markdown("""
         border: 1px solid #e2e8f0;
     }
 
+    /* ===== Panel de filtros ===== */
+    .st-key-panel_filtros {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+    }
+    .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .st-key-btn_add button {
+        background: #dbeafe !important;
+        color: #1d4ed8 !important;
+        border: none !important;
+    }
+    .st-key-btn_add button:hover {
+        background: #bfdbfe !important;
+        color: #1e40af !important;
+    }
+    .st-key-btn_clear button {
+        background: transparent !important;
+        color: #4b5563 !important;
+        border: none !important;
+    }
+    .st-key-btn_clear button:hover {
+        background: #e2e8f0 !important;
+        color: #111827 !important;
+    }
+    [class*="st-key-row_"] {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    [class*="st-key-row_"] [data-baseweb="select"] > div,
+    [class*="st-key-row_"] [data-baseweb="input"] > div {
+        background: white;
+        border: 1px solid #d1d5db;
+    }
+    [class*="st-key-del_"] button {
+        background: transparent !important;
+        border: none !important;
+        color: #ef4444 !important;
+    }
+    [class*="st-key-del_"] button:hover {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+    }
+
+    /* ===== Vista previa ===== */
+    .st-key-card_preview {
+        background: white;
+        border: 1px solid #f1f5f9;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08);
+        padding: 20px 24px;
+    }
+    .preview-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+    }
+    .preview-sub {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: 2px 0 0 0;
+    }
+    .st-key-dl_csv button, .st-key-dl_csv button p {
+        background: #16a34a !important;
+        color: white !important;
+        border: none !important;
+    }
+    .st-key-dl_csv button:hover, .st-key-dl_csv button:hover p {
+        background: #15803d !important;
+        color: white !important;
+    }
+    .st-key-dl_excel button, .st-key-dl_excel button p {
+        background: #059669 !important;
+        color: white !important;
+        border: none !important;
+    }
+    .st-key-dl_excel button:hover, .st-key-dl_excel button:hover p {
+        background: #047857 !important;
+        color: white !important;
+    }
+    [data-testid="stDataFrame"] {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
     /* Footer fijo */
     .footer {
         position: fixed;
@@ -288,45 +389,60 @@ if uploaded_file is not None:
         columns = df.columns.tolist()
 
         # 2. Panel de Filtros
-        st.write("### 🎛️ Panel de Filtros")
+        with st.container(key="panel_filtros"):
+            h_title, h_add, h_clear = st.columns([6, 1.7, 1.5], vertical_alignment="center")
+            with h_title:
+                st.markdown(
+                    '<div class="panel-title">'
+                    '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f2937" '
+                    'stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">'
+                    '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>'
+                    '<line x1="3" y1="18" x2="21" y2="18"/>'
+                    '<circle cx="8" cy="6" r="2.2" fill="#f1f5f9"/>'
+                    '<circle cx="16" cy="12" r="2.2" fill="#f1f5f9"/>'
+                    '<circle cx="10" cy="18" r="2.2" fill="#f1f5f9"/></svg>'
+                    'Panel de Filtros</div>',
+                    unsafe_allow_html=True
+                )
+            with h_add:
+                st.button("Añadir Filtro", icon=":material/add:", on_click=add_filter,
+                          key="btn_add", use_container_width=True)
+            with h_clear:
+                if len(st.session_state.filters) > 0:
+                    st.button("Limpiar Todos", on_click=clear_filters,
+                              key="btn_clear", use_container_width=True)
 
-        # Botones de control de filtros
-        col_btn1, col_btn2 = st.columns([1, 6])
-        with col_btn1:
-            st.button("➕ Añadir Filtro", on_click=add_filter)
-        with col_btn2:
-            if len(st.session_state.filters) > 0:
-                st.button("🗑️ Limpiar Todos", on_click=clear_filters)
+            # Mostrar las filas de filtros dinámicos
+            if len(st.session_state.filters) == 0:
+                st.info("No hay filtros activos. Añade uno para comenzar a limpiar tus datos.")
 
-        # Mostrar las filas de filtros dinámicos
-        if len(st.session_state.filters) == 0:
-            st.info("No hay filtros activos. Añade uno para comenzar a limpiar tus datos.")
+            for filter_id in st.session_state.filters:
+                with st.container(key=f"row_{filter_id}"):
+                    # Columnas: (Columna, Operador, Valor, Botón Eliminar)
+                    f_col1, f_col2, f_col3, f_col4 = st.columns([3, 3, 4, 0.6], vertical_alignment="center")
 
-        for filter_id in st.session_state.filters:
-            # Creamos columnas para organizar (Columna, Operador, Valor, Botón Eliminar)
-            f_col1, f_col2, f_col3, f_col4 = st.columns([3, 3, 4, 1])
+                    with f_col1:
+                        col_name = st.selectbox("Columna", columns, key=f"col_{filter_id}", label_visibility="collapsed")
 
-            with f_col1:
-                col_name = st.selectbox("Columna", columns, key=f"col_{filter_id}", label_visibility="collapsed")
+                    with f_col2:
+                        # Determinamos si la columna es numérica para cambiar los operadores
+                        is_numeric = pd.api.types.is_numeric_dtype(df[col_name].replace("", pd.NA).dropna())
 
-            with f_col2:
-                # Determinamos si la columna es numérica para cambiar los operadores
-                is_numeric = pd.api.types.is_numeric_dtype(df[col_name].replace("", pd.NA).dropna())
+                        if is_numeric:
+                            operators = ['Es igual a', 'No es igual a', 'Mayor que', 'Menor que', 'Mayor o igual', 'Menor o igual', 'Está vacío', 'No está vacío']
+                        else:
+                            operators = ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Empieza con', 'Termina con', 'Está vacío', 'No está vacío']
 
-                if is_numeric:
-                    operators = ['Es igual a', 'No es igual a', 'Mayor que', 'Menor que', 'Mayor o igual', 'Menor o igual', 'Está vacío', 'No está vacío']
-                else:
-                    operators = ['Contiene', 'No contiene', 'Es igual a', 'No es igual a', 'Empieza con', 'Termina con', 'Está vacío', 'No está vacío']
+                        operator = st.selectbox("Operador", operators, key=f"op_{filter_id}", label_visibility="collapsed")
 
-                operator = st.selectbox("Operador", operators, key=f"op_{filter_id}", label_visibility="collapsed")
+                    with f_col3:
+                        # Si el operador es de vacío, no mostramos el campo de texto
+                        if operator not in ['Está vacío', 'No está vacío']:
+                            st.text_input("Valor", key=f"val_{filter_id}", label_visibility="collapsed", placeholder="Valor del filtro...")
 
-            with f_col3:
-                # Si el operador es de vacío, no mostramos el campo de texto
-                if operator not in ['Está vacío', 'No está vacío']:
-                    val = st.text_input("Valor", key=f"val_{filter_id}", label_visibility="collapsed", placeholder="Escribe el valor...")
-
-            with f_col4:
-                st.button("❌", key=f"del_{filter_id}", on_click=remove_filter, args=(filter_id,), help="Eliminar este filtro")
+                    with f_col4:
+                        st.button("", icon=":material/delete:", key=f"del_{filter_id}",
+                                  on_click=remove_filter, args=(filter_id,), help="Eliminar este filtro")
 
         # 3. Aplicar Filtros
         df_filtered = df.copy()
@@ -381,36 +497,37 @@ if uploaded_file is not None:
         df_filtered = df_filtered[mask]
 
         # 4. Vista previa y Descargas
-        st.write("---")
-        res_col1, res_col2 = st.columns([1, 1])
+        with st.container(key="card_preview"):
+            p_title, p_csv, p_xls = st.columns([6, 1.6, 1.8], vertical_alignment="center")
 
-        with res_col1:
-            st.write("### 📋 Vista Previa")
-            st.caption(f"Mostrando **{len(df_filtered)}** de {len(df)} registros.")
-
-        with res_col2:
-            # Botones de exportación alineados a la derecha
-            dl_col1, dl_col2 = st.columns(2)
-            with dl_col1:
-                csv_data = convert_df_to_csv(df_filtered)
+            with p_title:
+                st.markdown(
+                    '<p class="preview-title">Vista Previa de Datos</p>'
+                    f'<p class="preview-sub">Mostrando {len(df_filtered)} de {len(df)} registros</p>',
+                    unsafe_allow_html=True
+                )
+            with p_csv:
                 st.download_button(
-                    label="⬇️ Exportar CSV",
-                    data=csv_data,
+                    label="Exportar CSV",
+                    data=convert_df_to_csv(df_filtered),
                     file_name="datos_filtrados.csv",
                     mime="text/csv",
+                    icon=":material/description:",
+                    key="dl_csv",
                     use_container_width=True
                 )
-            with dl_col2:
-                excel_data = convert_df_to_excel(df_filtered)
+            with p_xls:
                 st.download_button(
-                    label="⬇️ Exportar Excel",
-                    data=excel_data,
+                    label="Exportar Excel",
+                    data=convert_df_to_excel(df_filtered),
                     file_name="datos_filtrados.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    icon=":material/table_view:",
+                    key="dl_excel",
                     use_container_width=True
                 )
 
-        # Mostrar tabla (Pandas renderiza la tabla de forma muy eficiente en Streamlit)
+        # Tabla (st.dataframe es eficiente con muchos registros)
         st.dataframe(df_filtered, use_container_width=True, hide_index=True)
 
 # 5. Footer fijo
